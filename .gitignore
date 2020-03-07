@@ -1,0 +1,19 @@
+server/node_modules
+client/node_modules
+/dist
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
