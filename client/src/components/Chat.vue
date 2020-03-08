@@ -84,6 +84,21 @@ export default {
                   user: this.user,
           });
         }
+
+        this.socket.on('GET_CURRENT_CONNECTED',function(){
+            this.socket.emit('USER_CONNECTED', {
+                  user: this.user,
+          });
+          
+        })
+         this.socket.on('CONNECTED_USERS', (data) => {
+            console.log('received updated list!!!',data.connectedUsers );
+            this.connected_users = []
+            data.connectedUsers.map(x=>{
+                this.connected_users.push(x.user)
+            })
+            // this.connected_users = data.connectedUsers
+        });
         this.socket.on('MESSAGE', (data) => {
             this.messages = []
             data.map((x)=>{
@@ -102,10 +117,14 @@ export default {
         //     console.log(data)
         //     // you can also do this.messages.push(data)
         // });
-        this.socket.on('CONNECTED_USERS', (data) => {
-            console.log('received updated list!!!',data.connectedUsers );
-            this.connected_users = data.connectedUsers
-        });
+        // this.socket.on('CONNECTED_USERS', (data) => {
+        //     console.log('received updated list!!!',data.connectedUsers );
+        //     this.connected_users = []
+        //     data.connectedUsers.map(x=>{
+        //         this.connected_users.push(x.user)
+        //     })
+        //     // this.connected_users = data.connectedUsers
+        // });
     }
 }
 </script>
