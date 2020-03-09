@@ -36,7 +36,7 @@ export default {
             connected_users:[],
             message: '',
             messages: [],
-            socket : io('http://192.168.1.69:3001/')
+            socket : io('localhost:3001')
         }
     },
     methods: {
@@ -52,18 +52,18 @@ export default {
             this.socket.emit('get chat',{});
         }
         
-        this.socket.on('check cookie', () => {
+        this.socket.on('cookie_check', () => {
         if (this.$cookies.get("name")) {
-            this.socket.emit('set existing user', {
+            this.socket.emit('saved user', {
                 'name': this.$cookies.get("name"), 
                 'color': this.$cookies.get("color") 
         });
         } else {
-            this.socket.emit('new user');
+            this.socket.emit('connects user');
         }
         });
 
-        this.socket.on('updateUsers', (data) => {
+        this.socket.on('get users', (data) => {
             this.connected_users = data;
         });
 
@@ -76,21 +76,11 @@ export default {
             this.color = data;
         });
 
-        this.socket.on('set cookie', (name, color) => {
+        this.socket.on('cookie_set', (name, color) => {
             this.$cookies.set("name", name);
             this.$cookies.set("color", color);
         });
 
-        
-
-         this.socket.on('connected users', (data) => {
-            console.log('received updated list!!!',data.connectedUsers );
-            this.connected_users = []
-            data.connectedUsers.map(x=>{
-                this.connected_users.push(x.user)
-            })
-            // this.connected_users = data.connectedUsers
-        });
         this.socket.on('update chat', (data) => {
             this.messages = data;
         });
