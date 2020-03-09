@@ -1,18 +1,18 @@
 <template>
   <div class="container">
     <div class="header">
-      <h3>You are: <span style="color:red">{{this.user}}</span></h3>
+      <h3>You are: <span v-bind:style="{color:'#'+this.color}">{{this.user}}</span></h3>
       <h3>Online Users: </h3>
     </div>
     <div class="mainContent">
         <div class="chatbox">
             <div class="messages" v-for="(msg, index) in messages" :key="index">
-                <p><span class="username">{{ msg.user }}: </span>{{ msg.message }}</p>
+                <p v-bind:style="{fontWeight: msg.weight}">{{msg.time}} <span class="" v-bind:style="{color:'#'+ msg.color}">{{ msg.name }}: </span>{{ msg.message }}</p>
             </div>
         </div>
         <div class="online">
             <div class="connected_user" v-for="connected_user in this.connected_users" :key="connected_user">
-            <p>{{ connected_user }}</p>
+            <p>{{ connected_user.name }}</p>
             </div>
         </div>     
     </div>
@@ -21,31 +21,6 @@
             <input type="text" v-model="message" class="form-control" placeholder="Begin Typing Your Message...">
         </form>
     </div>
-   
-      <!-- <div class="card-body">
-          <div class="card-title">
-              <h3>Chat Group</h3>
-              <hr>
-          </div>
-          <div class="card-body">
-              <div class="messages" v-for="(msg, index) in messages" :key="index">
-                  <p><span class="font-weight-bold">{{ msg.user }}: </span>{{ msg.message }}</p>
-              </div>
-          </div>
-      </div>
-      <div class="card-footer">
-          <form @submit.prevent="sendMessage">
-              <div class="gorm-group">
-                  <label for="user">User:</label>
-                  <input type="text" v-model="user" class="form-control">
-              </div>
-              <div class="gorm-group pb-3">
-                  <label for="message">Message:</label>
-                  <input type="text" v-model="message" class="form-control">
-              </div>
-              <button type="submit" class="btn btn-success">Send</button>
-          </form>
-      </div> -->
   </div>
 </template>
 
@@ -57,41 +32,58 @@ export default {
     data() {
         return {
             user: 'none',
+            color:'',
             connected_users:[],
             message: '',
             messages: [],
-            socket : io('localhost:3001')
+            socket : io('http://192.168.1.69:3001/')
         }
     },
     methods: {
         sendMessage(e) {
             e.preventDefault();
             
-            this.socket.emit('SEND_MESSAGE', {
-                user: this.user,
-                message: this.message
-            });
+            this.socket.emit('send message', this.message);
             this.message = ''
         }
     },
     mounted() {
         if(this.messages.length==0){
-            this.socket.emit('GET_CHAT',{});
+            this.socket.emit('get chat',{});
         }
-        if(!this.connected_users.includes(this.user)){
-          this.user = 'User'+Math.floor((Math.random() * 10000000) + 1);
-          this.socket.emit('USER_CONNECTED', {
-                  user: this.user,
-          });
+        
+        this.socket.on('check cookie', () => {
+        if (this.$cookies.get("name")) {
+            this.socket.emit('set existing user', {
+                'name': this.$cookies.get("name"), 
+                'color': this.$cookies.get("color") 
+        });
+        } else {
+            this.socket.emit('new user');
         }
+        });
 
-        this.socket.on('GET_CURRENT_CONNECTED',function(){
-            this.socket.emit('USER_CONNECTED', {
-                  user: this.user,
-          });
-          
-        })
-         this.socket.on('CONNECTED_USERS', (data) => {
+        this.socket.on('updateUsers', (data) => {
+            this.connected_users = data;
+        });
+
+  
+        this.socket.on('name', (data) => {
+            this.user = data;
+        });
+
+        this.socket.on('color', (data) => {
+            this.color = data;
+        });
+
+        this.socket.on('set cookie', (name, color) => {
+            this.$cookies.set("name", name);
+            this.$cookies.set("color", color);
+        });
+
+        
+
+         this.socket.on('connected users', (data) => {
             console.log('received updated list!!!',data.connectedUsers );
             this.connected_users = []
             data.connectedUsers.map(x=>{
@@ -99,33 +91,14 @@ export default {
             })
             // this.connected_users = data.connectedUsers
         });
-        this.socket.on('MESSAGE', (data) => {
-            this.messages = []
-            data.map((x)=>{
-                this.messages.push(x)
-            })
-            console.log(data)
-            // you can also do this.messages.push(data)
+        this.socket.on('update chat', (data) => {
+            this.messages = data;
+        });
+    
+        this.socket.on('message', (data) => {
+            this.messages.push(data)
         });
     },
-    updated(){
-        // this.socket.on('MESSAGE', (data) => {
-        //     this.messages = []
-        //     data.map((x)=>{
-        //         this.messages.push(x)
-        //     })
-        //     console.log(data)
-        //     // you can also do this.messages.push(data)
-        // });
-        // this.socket.on('CONNECTED_USERS', (data) => {
-        //     console.log('received updated list!!!',data.connectedUsers );
-        //     this.connected_users = []
-        //     data.connectedUsers.map(x=>{
-        //         this.connected_users.push(x.user)
-        //     })
-        //     // this.connected_users = data.connectedUsers
-        // });
-    }
 }
 </script>
 
@@ -166,6 +139,8 @@ export default {
         align-self: flex-end;
         flex-grow: 9;
         padding:1% 3%;
+        height: 500px;
+        overflow-y:scroll;
     }
     .online{
         border-left:2px solid gainsboro;
@@ -187,5 +162,14 @@ export default {
     display:flex;
     flex-direction: row;
     justify-content: space-between;
+  }
+  ::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, .5);
+    -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
   }
 </style>
